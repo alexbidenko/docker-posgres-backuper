@@ -12,9 +12,10 @@
 - _Опционально:_ если база данных использует не стандартные значения базы данных, пользователя или пароля,
 то их необходимо указать в переменных окружения контроллера, при этом переменные имеют префикс соответствующий названию сервиса базы данных.
 Пример для базы данных `users`:
-  - `USERS_POSTGRES_USER`: user
-  - `USERS_POSTGRES_PASSWORD`: password
-  - `USERS_POSTGRES_DB`: database
+  - `USERS_POSTGRES_USER`: user (по умолчанию `postgres`)
+  - `USERS_POSTGRES_PASSWORD`: password (по умолчанию `postgres`)
+  - `USERS_POSTGRES_DB`: database (по умолчанию `postgres`)
+  - `USERS_POSTGRES_HOST`: host (по умолчанию название базы данных - `users`)
 
 ## Контроллер базы данных
 

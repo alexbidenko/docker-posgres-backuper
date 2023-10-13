@@ -16,7 +16,7 @@ func Restore(database, backupPath, filename string, databaseList []string) {
 			"pg_restore",
 			"-c",
 			"-U", getDatabaseEnv(item, "POSTGRES_USER"),
-			"-h", item,
+			"-h", getDatabaseEnv(item, "POSTGRES_HOST"),
 			"-d", getDatabaseEnv(item, "POSTGRES_DB"),
 			backupPath+"/"+item+"/"+filename,
 		)

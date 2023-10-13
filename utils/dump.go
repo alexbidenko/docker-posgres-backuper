@@ -54,7 +54,7 @@ func Dump(database, backupPath, backupType string, withCopying bool, databaseLis
 			"-c",
 			"-Fc",
 			"-U", getDatabaseEnv(item, "POSTGRES_USER"),
-			"-h", item,
+			"-h", getDatabaseEnv(item, "POSTGRES_HOST"),
 			"-f", backupPath+"/"+item+"/"+filename,
 		)
 		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+getDatabaseEnv(item, "POSTGRES_PASSWORD"))

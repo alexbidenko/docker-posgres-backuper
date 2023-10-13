@@ -23,9 +23,11 @@ services:
       USERS_POSTGRES_USER: postgres
       USERS_POSTGRES_PASSWORD: postgres
       USERS_POSTGRES_DB: postgres
+      USERS_POSTGRES_HOST: users-database
       CONTENT_POSTGRES_USER: postgres
       CONTENT_POSTGRES_PASSWORD: postgres
       CONTENT_POSTGRES_DB: postgres
+      CONTENT_POSTGRES_HOST: content-database
     deploy:
       replicas: 1
       restart_policy:

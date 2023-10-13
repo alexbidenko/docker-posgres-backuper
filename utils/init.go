@@ -12,6 +12,9 @@ func getDatabaseEnv(database, env string) string {
 	if value != "" {
 		return value
 	}
+	if env == "POSTGRES_HOST" {
+		return database
+	}
 	return "postgres"
 }
 
