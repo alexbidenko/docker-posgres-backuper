@@ -1,0 +1,21 @@
+# Mac OS
+**/.DS_Store
+
+# Editors
+**/.vscode
+**/.idea
+
+# Environment
+**/venv
+**/env
+**/.env*
+conn.yml
+
+env.yml
+
+dev-reqs.txt/
+
+*.sqlite3
+
+.coverage
+backup-data

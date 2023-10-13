@@ -1,0 +1,56 @@
+version: '3.8'
+
+volumes:
+  database-backup:
+  shared-backup:
+
+  users-database:
+  content-database:
+
+services:
+  controller:
+    image: alexbidenko1998/docker-postgres-backuper:latest
+    volumes:
+      - database-backup:/usr/backup/data
+      - shared-backup:/usr/backup/shared
+
+      - users-database:/usr/databases/users
+      - company-database:/usr/databases/company
+    environment:
+      MODE: production
+      COPING_TO_SHARED: true
+      DATABASE_LIST: "users,content"
+      USERS_POSTGRES_USER: postgres
+      USERS_POSTGRES_PASSWORD: postgres
+      USERS_POSTGRES_DB: postgres
+      CONTENT_POSTGRES_USER: postgres
+      CONTENT_POSTGRES_PASSWORD: postgres
+      CONTENT_POSTGRES_DB: postgres
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  users-database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - users-database:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  content-database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - content-database:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
