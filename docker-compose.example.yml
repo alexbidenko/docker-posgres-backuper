@@ -11,11 +11,11 @@ services:
   controller:
     image: alexbidenko1998/docker-postgres-backuper:latest
     volumes:
-      - database-backup:/usr/backup/data
-      - shared-backup:/usr/backup/shared
+      - database-backup:/var/lib/postgresql/backup/data
+      - shared-backup:/var/lib/postgresql/backup/shared
 
-      - users-database:/usr/databases/users
-      - company-database:/usr/databases/company
+      - users-database:/var/lib/postgresql/databases/users
+      - company-database:/var/lib/postgresql/databases/company
     environment:
       MODE: production
       COPING_TO_SHARED: true

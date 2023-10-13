@@ -1,6 +1,6 @@
 package utils
 
-const BaseBackupDirectoryPath = "/usr/backup/data"
-const BaseSharedDirectoryPath = "/usr/backup/shared"
-const BaseDatabaseDirectoryPath = "/usr/databases"
+const BaseBackupDirectoryPath = "/var/lib/postgresql/backup/data"
+const BaseSharedDirectoryPath = "/var/lib/postgresql/backup/shared"
+const BaseDatabaseDirectoryPath = "/var/lib/postgresql/databases"
 const IntervalInHours = 6

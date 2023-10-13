@@ -4,7 +4,9 @@ on:
       - 'v*.*.*'
 
 jobs:
-  punlish:
+  publish:
+    name: Build and publish application
+
     runs-on: ubuntu-22.04
 
     steps:

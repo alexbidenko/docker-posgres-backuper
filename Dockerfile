@@ -15,7 +15,7 @@ ENV TZ=Europe/Moscow
 
 WORKDIR /app
 
-COPY README.md .
+COPY --chown=postgres:postgres README.md .
 COPY --from=build --chown=postgres:postgres /build/main ./controller
 
 USER postgres
