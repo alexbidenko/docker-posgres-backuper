@@ -13,6 +13,10 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    env:
+      CURRENT_TAG: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ env.RELEASE_VERSION }}-${{ matrix.postgres }}postgres
+      LATEST_TAG: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -32,9 +36,10 @@ jobs:
       - name: Prepare tags
         id: prepare-tags
         run: |
-          echo "tags=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}" >> $GITHUB_OUTPUT
           if [[ ${{ matrix.postgres }} == '16' ]]; then
-            echo "tags=${{ steps.prepare-tags.outputs.tags }},${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest" >> $GITHUB_OUTPUT
+            echo "tags=${{ env.CURRENT_TAG }},${{ env.LATEST_TAG }}" >> $GITHUB_OUTPUT
+          else
+            echo "tags=${{ env.CURRENT_TAG }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push
