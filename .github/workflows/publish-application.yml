@@ -13,9 +13,6 @@ jobs:
 
     runs-on: ubuntu-22.04
 
-    env:
-      TAGS: ${{ matrix.postgres == '16' && '${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,' || '' }}${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -36,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ env.TAGS }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
           build-args: |
             POSTGRES_VERSION=${{ matrix.postgres }}
 
