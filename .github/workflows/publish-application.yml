@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
-      TAGS: ${{ matrix.postgres == env.LATEST_POSTGRES_VERSION && '${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,' || '' }}${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
+      TAGS: ${{ matrix.postgres == '16' && '${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,' || '' }}${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
 
     steps:
       - name: Check out Git repository
