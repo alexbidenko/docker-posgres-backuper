@@ -1,0 +1,5 @@
+.idea
+.github
+.editorconfig
+.gitignore
+docker-compose.example.yml

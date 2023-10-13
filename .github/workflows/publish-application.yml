@@ -4,7 +4,7 @@ on:
       - 'v*.*.*'
 
 jobs:
-  deploy:
+  punlish:
     runs-on: ubuntu-22.04
 
     steps:

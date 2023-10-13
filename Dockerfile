@@ -4,7 +4,7 @@ ENV GOPATH="/go/src"
 
 WORKDIR /go/src/application
 
-COPY controller .
+COPY . .
 
 RUN GOOS=linux go build -ldflags="-s -w" -o main .
 
