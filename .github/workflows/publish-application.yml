@@ -13,25 +13,15 @@ jobs:
 
     runs-on: ubuntu-22.04
 
-    env:
-      CURRENT_TAG: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ env.RELEASE_VERSION }}-${{ matrix.postgres }}postgres
-      LATEST_TAG: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
 
       - name: Get version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ env.RELEASE_VERSION }}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
+          echo "LATEST_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest" >> $GITHUB_ENV
 
       - name: Prepare tags
         id: prepare-tags
@@ -41,6 +31,15 @@ jobs:
           else
             echo "tags=${{ env.CURRENT_TAG }}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and push
         uses: docker/build-push-action@v3
