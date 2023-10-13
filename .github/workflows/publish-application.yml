@@ -3,16 +3,13 @@ on:
     tags:
       - 'v*.*.*'
 
-env:
-  LATEST_POSTGRES_VERSION: '16'
-
 jobs:
   publish:
     name: Build and publish application
 
     strategy:
       matrix:
-        postgres: ['14', '15', ${{ env.LATEST_POSTGRES_VERSION }}]
+        postgres: ['14', '15', '16']
 
     runs-on: ubuntu-22.04
 
