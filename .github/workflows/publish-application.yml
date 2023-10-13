@@ -3,11 +3,21 @@ on:
     tags:
       - 'v*.*.*'
 
+env:
+  LATEST_POSTGRES_VERSION: '16'
+
 jobs:
   publish:
     name: Build and publish application
 
+    strategy:
+      matrix:
+        postgres: ['14', '15', ${{ env.LATEST_POSTGRES_VERSION }}]
+
     runs-on: ubuntu-22.04
+
+    env:
+      TAGS: ${{ matrix.postgres == env.LATEST_POSTGRES_VERSION && '${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,' || '' }}${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
 
     steps:
       - name: Check out Git repository
@@ -29,7 +39,9 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest,${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ env.RELEASE_VERSION }}
+          tags: ${{ env.TAGS }}
+          build-args: |
+            POSTGRES_VERSION=${{ matrix.postgres }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
