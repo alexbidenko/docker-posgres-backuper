@@ -19,8 +19,7 @@ jobs:
 
       - name: Get version
         run: |
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-          echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ env.RELEASE_VERSION }}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
+          echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${GITHUB_REF#refs/*/v}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
           echo "LATEST_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest" >> $GITHUB_ENV
 
       - name: Prepare tags
@@ -55,6 +54,6 @@ jobs:
       - name: Scan for vulnerabilities
         uses: crazy-max/ghaction-container-scan@v3
         with:
-          image: ${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}-${{ env.RELEASE_VERSION }}
+          image: ${{ env.CURRENT_TAG }}
           dockerfile: ./Dockerfile
           annotations: true
