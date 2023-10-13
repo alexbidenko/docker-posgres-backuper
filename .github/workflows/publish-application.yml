@@ -20,15 +20,16 @@ jobs:
       - name: Get version
         run: |
           echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${GITHUB_REF#refs/*/v}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
+          echo "POSTGRES_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}postgres" >> $GITHUB_ENV
           echo "LATEST_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest" >> $GITHUB_ENV
 
       - name: Prepare tags
         id: prepare-tags
         run: |
           if [[ ${{ matrix.postgres }} == '16' ]]; then
-            echo "tags=${{ env.CURRENT_TAG }},${{ env.LATEST_TAG }}" >> $GITHUB_OUTPUT
+            echo "tags=${{ env.CURRENT_TAG }},${{ env.POSTGRES_TAG }},${{ env.LATEST_TAG }}" >> $GITHUB_OUTPUT
           else
-            echo "tags=${{ env.CURRENT_TAG }}" >> $GITHUB_OUTPUT
+            echo "tags=${{ env.CURRENT_TAG }},${{ env.POSTGRES_TAG }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Login to Docker Hub
