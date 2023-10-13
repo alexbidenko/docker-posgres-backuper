@@ -1,6 +1,6 @@
-FROM golang:1.21-alpine AS build
-
 ARG POSTGRES_VERSION
+
+FROM golang:1.21-alpine AS build
 
 ENV GOPATH="/go/src"
 
