@@ -9,7 +9,7 @@ volumes:
 
 services:
   controller:
-    image: alexbidenko1998/docker-postgres-backuper:latest
+    image: alexbidenko/docker-postgres-backuper:latest
     volumes:
       - database-backup:/var/lib/postgresql/backup/data
       - shared-backup:/var/lib/postgresql/backup/shared
