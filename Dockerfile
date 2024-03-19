@@ -14,6 +14,7 @@ FROM postgres:${POSTGRES_VERSION}-alpine
 
 RUN apk add --no-cache tzdata
 ENV TZ=Europe/Moscow
+ENV MODE=production
 
 WORKDIR /app
 

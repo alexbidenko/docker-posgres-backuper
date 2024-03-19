@@ -17,7 +17,6 @@ services:
       - users-database:/var/lib/postgresql/databases/users
       - company-database:/var/lib/postgresql/databases/company
     environment:
-      MODE: production
       COPING_TO_SHARED: true
       DATABASE_LIST: "users,content"
       USERS_POSTGRES_USER: postgres
