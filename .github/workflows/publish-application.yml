@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        postgres: ['14', '15', '16']
+        postgres: ['14', '15', '16', '17']
 
     runs-on: ubuntu-22.04
 
@@ -19,9 +19,9 @@ jobs:
 
       - name: Get version
         run: |
-          echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${GITHUB_REF#refs/*/v}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
-          echo "POSTGRES_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:${{ matrix.postgres }}postgres" >> $GITHUB_ENV
-          echo "LATEST_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/docker-postgres-backuper:latest" >> $GITHUB_ENV
+          echo "CURRENT_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/postgres-backuper:${GITHUB_REF#refs/*/v}-${{ matrix.postgres }}postgres" >> $GITHUB_ENV
+          echo "POSTGRES_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/postgres-backuper:${{ matrix.postgres }}postgres" >> $GITHUB_ENV
+          echo "LATEST_TAG=${{ secrets.DOCKER_HUB_USERNAME }}/postgres-backuper:latest" >> $GITHUB_ENV
 
       - name: Prepare tags
         id: prepare-tags
