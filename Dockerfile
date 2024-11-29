@@ -1,6 +1,6 @@
 ARG POSTGRES_VERSION
 
-FROM golang:1.21-alpine AS build
+FROM golang:1.23-alpine AS build
 
 ENV GOPATH="/go/src"
 
@@ -20,5 +20,9 @@ WORKDIR /app
 
 COPY README.md .
 COPY --from=build /build/main ./controller
+
+RUN chown -R postgres:postgres /app
+
+USER postgres
 
 ENTRYPOINT  ["./controller", "start"]
