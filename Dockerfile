@@ -13,7 +13,6 @@ RUN GOOS=linux go build -ldflags="-s -w" -o main .
 FROM postgres:${POSTGRES_VERSION}-alpine
 
 RUN apk add --no-cache tzdata
-ENV TZ=Europe/Moscow
 ENV MODE=production
 
 WORKDIR /app
@@ -21,7 +20,11 @@ WORKDIR /app
 COPY README.md .
 COPY --from=build /build/main ./controller
 
-RUN chown -R postgres:postgres /app
+RUN chown -R postgres:postgres /app && \
+    mkdir -p /var/lib/postgresql/backup && \
+    mkdir -p /var/lib/postgresql/databases && \
+    chown -R /var/lib/postgresql/backup && \
+    chown -R /var/lib/postgresql/databases
 
 USER postgres
 

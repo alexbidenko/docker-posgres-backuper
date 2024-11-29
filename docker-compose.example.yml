@@ -9,7 +9,7 @@ volumes:
 
 services:
   controller:
-    image: alexbidenko/docker-postgres-backuper:15postgres
+    image: alexbidenko/docker-postgres-backuper:17postgres
     volumes:
       - database-backup:/var/lib/postgresql/backup/data
       - shared-backup:/var/lib/postgresql/backup/shared
@@ -27,13 +27,14 @@ services:
       CONTENT_POSTGRES_PASSWORD: postgres
       CONTENT_POSTGRES_DB: postgres
       CONTENT_POSTGRES_HOST: content-database
+      TZ: Europe/London
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
 
   users-database:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -45,7 +46,7 @@ services:
         condition: on-failure
 
   content-database:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
