@@ -23,9 +23,9 @@ COPY --from=build /build/main ./controller
 RUN chown -R postgres:postgres /app && \
     mkdir -p /var/lib/postgresql/backup && \
     mkdir -p /var/lib/postgresql/databases && \
-    chown -R /var/lib/postgresql/backup && \
-    chown -R /var/lib/postgresql/databases
+    chown -R postgres:postgres /var/lib/postgresql/backup && \
+    chown -R postgres:postgres /var/lib/postgresql/databases
 
 USER postgres
 
-ENTRYPOINT  ["./controller", "start"]
+ENTRYPOINT ["./controller", "start"]
