@@ -20,7 +20,11 @@ WORKDIR /app
 COPY README.md .
 COPY --from=build /build/main ./controller
 
-RUN chown -R postgres:postgres /app
+RUN chown -R postgres:postgres /app && \
+    mkdir -p /var/lib/postgresql/backup && \
+    mkdir -p /var/lib/postgresql/databases && \
+    chown -R postgres:postgres /var/lib/postgresql/backup && \
+    chown -R postgres:postgres /var/lib/postgresql/databases
 
 COPY docker-entrypoint.sh /usr/local/bin
 
