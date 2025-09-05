@@ -28,6 +28,7 @@ services:
       CONTENT_POSTGRES_DB: postgres
       CONTENT_POSTGRES_HOST: content-database
       TZ: Europe/London
+    user: postgres
     deploy:
       replicas: 1
       restart_policy:
@@ -40,6 +41,7 @@ services:
       - POSTGRES_PASSWORD=postgres
     volumes:
       - users-database:/var/lib/postgresql/data
+    user: postgres
     deploy:
       replicas: 1
       restart_policy:
@@ -52,6 +54,7 @@ services:
       - POSTGRES_PASSWORD=postgres
     volumes:
       - content-database:/var/lib/postgresql/data
+    user: postgres
     deploy:
       replicas: 1
       restart_policy:

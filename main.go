@@ -19,7 +19,7 @@ func main() {
 	}
 
 	command := os.Args[1]
-	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump" || command == "resetwal" || command == "restore-from-prod"))) {
+	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump" || command == "resetwal" || command == "restore-from-shared"))) {
 		panic("uncorrected command")
 	}
 
