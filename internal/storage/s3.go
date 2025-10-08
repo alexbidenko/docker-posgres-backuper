@@ -3,6 +3,7 @@ package storage
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/xml"
 	"errors"
@@ -110,7 +111,16 @@ func NewS3(cfg S3Config) (*S3, error) {
 		return nil, fmt.Errorf("s3 endpoint must include host")
 	}
 
-	client := &http.Client{}
+	transport := &http.Transport{
+		Proxy:             http.ProxyFromEnvironment,
+		ForceAttemptHTTP2: false,
+	}
+	if parsed.Scheme == "https" {
+		transport.TLSClientConfig = &tls.Config{}
+	}
+	transport.TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
+
+	client := &http.Client{Transport: transport}
 
 	return &S3{
 		bucket:     cfg.Bucket,
@@ -506,8 +516,10 @@ func canonicalizeHeaders(req *http.Request) (string, string) {
 		lower := strings.ToLower(key)
 		copied := make([]string, len(values))
 		for i, value := range values {
-			copied[i] = strings.TrimSpace(value)
+			cleaned := strings.Join(strings.Fields(value), " ")
+			copied[i] = strings.TrimSpace(cleaned)
 		}
+		sort.Strings(copied)
 		headers[lower] = copied
 	}
 

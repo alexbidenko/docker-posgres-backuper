@@ -179,6 +179,11 @@ endpoint for `https://<bucket>.<host>/...`; providers that do not create wildcar
 bucket DNS records (Timeweb Cloud, some MinIO setups, etc.) will answer with `no
 such host` and the upload is skipped.
 
+All S3 requests are forced to use HTTP/1.1. Several S3-compatible storages (Timeweb
+Cloud among them) fail signature verification when the client negotiates HTTP/2,
+so the controller disables it to keep the canonical request identical to what the
+service expects.
+
 ### Troubleshooting S3 uploads
 
 | Symptom | Likely cause | Fix |
