@@ -124,3 +124,18 @@ host) so that both the backup controller and the databases share the same UID/GI
 ## License
 
 This project is distributed under the terms of the [MIT License](LICENSE.txt).
+
+## Testing
+
+Integration tests cover the full backup and restore flow by orchestrating
+PostgreSQL and the controller inside Docker containers. To run them locally:
+
+```bash
+go test ./... ./test/...
+```
+
+> **Tip**: run with `-v` to see a step-by-step log of every Docker command that the
+> suite executes.
+
+> **Note**: Docker must be available in the environment. When it is missing the
+> integration suite is skipped.
