@@ -12,18 +12,22 @@ import (
 	"time"
 )
 
+const dockerCommandTimeout = 5 * time.Minute
+
 func TestControllerEndToEnd(t *testing.T) {
 	requireDocker(t)
 
 	repoRoot := projectRoot(t)
 
 	networkName := fmt.Sprintf("pgbackup-test-%d", time.Now().UnixNano())
+	t.Logf("creating temporary Docker network %s", networkName)
 	runDockerCommand(t, repoRoot, "network", "create", networkName)
-	defer func() {
-		runDockerCommandAllowFailure(repoRoot, "network", "rm", networkName)
-	}()
+	t.Cleanup(func() {
+		runDockerCommandAllowFailure(t, repoRoot, "network", "rm", networkName)
+	})
 
 	postgresName := networkName + "-postgres"
+	t.Logf("starting postgres container %s", postgresName)
 	runDockerCommand(t, repoRoot,
 		"run", "-d",
 		"--name", postgresName,
@@ -33,29 +37,33 @@ func TestControllerEndToEnd(t *testing.T) {
 		"-e", "POSTGRES_DB=postgres",
 		"postgres:15-alpine",
 	)
-	defer func() {
-		runDockerCommandAllowFailure(repoRoot, "rm", "-f", postgresName)
-	}()
+	t.Cleanup(func() {
+		runDockerCommandAllowFailure(t, repoRoot, "rm", "-f", postgresName)
+	})
 
+	t.Log("waiting for postgres to accept connections")
 	waitForPostgresReady(t, postgresName)
 
 	runPSQL(t, repoRoot, postgresName, "CREATE TABLE IF NOT EXISTS items (id SERIAL PRIMARY KEY, name TEXT NOT NULL);")
 	runPSQL(t, repoRoot, postgresName, "TRUNCATE items;")
 
 	initialRows := []string{"alpha", "beta"}
+	t.Log("inserting initial dataset into postgres")
 	insertRows(t, repoRoot, postgresName, initialRows)
 
 	imageName := fmt.Sprintf("controller-test:%d", time.Now().UnixNano())
+	t.Logf("building controller image %s", imageName)
 	runDockerCommand(t, repoRoot,
 		"build", "-t", imageName,
 		"--build-arg", "POSTGRES_VERSION=15",
 		repoRoot,
 	)
-	defer func() {
-		runDockerCommandAllowFailure(repoRoot, "rmi", "-f", imageName)
-	}()
+	t.Cleanup(func() {
+		runDockerCommandAllowFailure(t, repoRoot, "rmi", "-f", imageName)
+	})
 
 	controllerName := networkName + "-controller"
+	t.Logf("starting controller container %s", controllerName)
 	runDockerCommand(t, repoRoot,
 		"run", "-d",
 		"--name", controllerName,
@@ -72,12 +80,14 @@ func TestControllerEndToEnd(t *testing.T) {
 		imageName,
 		"-c", "tail -f /dev/null",
 	)
-	defer func() {
-		runDockerCommandAllowFailure(repoRoot, "rm", "-f", controllerName)
-	}()
+	t.Cleanup(func() {
+		runDockerCommandAllowFailure(t, repoRoot, "rm", "-f", controllerName)
+	})
 
+	t.Log("preparing backup directories inside controller")
 	createControllerDirectories(t, repoRoot, controllerName)
 
+	t.Log("running manual dump")
 	runController(t, repoRoot, controllerName, "./controller", "dump", "testdb")
 
 	backupFile := latestBackup(t, repoRoot, controllerName, "/var/lib/postgresql/backup/data/testdb")
@@ -85,11 +95,13 @@ func TestControllerEndToEnd(t *testing.T) {
 		t.Fatalf("unexpected backup name: %s", backupFile)
 	}
 
+	t.Log("clearing table to validate restore")
 	runPSQL(t, repoRoot, postgresName, "DELETE FROM items;")
 	if rows := queryRows(t, repoRoot, postgresName); len(rows) != 0 {
 		t.Fatalf("expected empty table after delete, got %v", rows)
 	}
 
+	t.Logf("restoring dump %s", backupFile)
 	runController(t, repoRoot, controllerName, "./controller", "restore", "testdb", backupFile)
 
 	if rows := queryRows(t, repoRoot, postgresName); !equalSlices(rows, initialRows) {
@@ -97,16 +109,20 @@ func TestControllerEndToEnd(t *testing.T) {
 	}
 
 	sharedRows := []string{"charlie", "delta"}
+	t.Log("preparing shared dump dataset")
 	runPSQL(t, repoRoot, postgresName, "TRUNCATE items;")
 	insertRows(t, repoRoot, postgresName, sharedRows)
 
+	t.Log("creating shared dump")
 	runController(t, repoRoot, controllerName, "./controller", "dump", "testdb", "--shared")
 
 	ensureSharedDumpExists(t, repoRoot, controllerName, "/var/lib/postgresql/backup/shared/testdb/file.dump")
 
+	t.Log("mutating table before restore-from-shared")
 	runPSQL(t, repoRoot, postgresName, "TRUNCATE items;")
 	insertRows(t, repoRoot, postgresName, []string{"mutated"})
 
+	t.Log("restoring from shared dump")
 	runController(t, repoRoot, controllerName, "./controller", "restore-from-shared", "testdb")
 
 	if rows := queryRows(t, repoRoot, postgresName); !equalSlices(rows, sharedRows) {
@@ -134,19 +150,29 @@ func projectRoot(t *testing.T) string {
 
 func runDockerCommand(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.CommandContext(context.Background(), "docker", args...)
+	t.Logf("docker %s", strings.Join(args, " "))
+	ctx, cancel := context.WithTimeout(context.Background(), dockerCommandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "docker", args...)
 	if dir != "" {
 		cmd.Dir = dir
 	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			t.Fatalf("docker %v timed out after %s\n%s", args, dockerCommandTimeout, string(output))
+		}
 		t.Fatalf("docker %v failed: %v\n%s", args, err, string(output))
 	}
 	return string(output)
 }
 
-func runDockerCommandAllowFailure(dir string, args ...string) {
-	cmd := exec.CommandContext(context.Background(), "docker", args...)
+func runDockerCommandAllowFailure(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	t.Logf("cleanup: docker %s", strings.Join(args, " "))
+	ctx, cancel := context.WithTimeout(context.Background(), dockerCommandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "docker", args...)
 	if dir != "" {
 		cmd.Dir = dir
 	}
