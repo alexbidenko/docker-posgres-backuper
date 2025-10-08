@@ -45,21 +45,59 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 
 ## Environment Variables
 
+### General settings
+
 | Variable | Description |
 | --- | --- |
+| `BACKUP_TARGET` | Storage provider used for backups. Set to `local` (default) or `s3`. |
 | `DATABASE_LIST` | Comma-separated list of database service identifiers that the controller manages. |
-| `<SERVICE>_POSTGRES_USER` | Username for the target database (defaults to `postgres`). |
-| `<SERVICE>_POSTGRES_PASSWORD` | Password for the target database (defaults to `postgres`). |
-| `<SERVICE>_POSTGRES_DB` | Database name used for restores (defaults to `postgres`). |
-| `<SERVICE>_POSTGRES_HOST` | Hostname of the database service (defaults to the service name). |
 | `MODE` | Set to `production` to use the predefined `/var/lib/postgresql/backup/*` locations and enable scheduled dumps. |
 | `SERVER` | When set to `production`, shared directories are created during initialisation. |
 | `COPING_TO_SHARED` | When `true`, automated dumps triggered in production are also copied to the shared directory. |
 | `TZ` | Optional timezone used by cron-like scheduling inside the container. |
 
+### Database connection overrides
+
+| Variable | Description |
+| --- | --- |
+| `<SERVICE>_POSTGRES_HOST` | Hostname of the database service (defaults to the service name). |
+| `<SERVICE>_POSTGRES_USER` | Username for the target database (defaults to `postgres`). |
+| `<SERVICE>_POSTGRES_PASSWORD` | Password for the target database (defaults to `postgres`). |
+| `<SERVICE>_POSTGRES_DB` | Database name used for restores (defaults to `postgres`). |
+
 > **Note**: Environment variable prefixes are derived from the service identifier in
 > `DATABASE_LIST`. For example, a service named `users` uses `USERS_POSTGRES_USER`,
 > `USERS_POSTGRES_PASSWORD`, etc. Hyphens (`-`) in service names are converted to underscores.
+
+### S3 storage options
+
+| Variable | Description |
+| --- | --- |
+| `S3_BUCKET` | Bucket name used when `BACKUP_TARGET=s3`. |
+| `S3_PREFIX` | Optional prefix inside the S3 bucket where backups are stored. |
+| `S3_REGION` | AWS region of the S3 endpoint. |
+| `S3_ENDPOINT` | Endpoint URL of the S3-compatible service. |
+| `S3_ACCESS_KEY_ID` | Access key for the S3 service. |
+| `S3_SECRET_ACCESS_KEY` | Secret key for the S3 service. |
+| `S3_USE_TLS` | Set to `true` to use HTTPS (recommended). |
+| `S3_FORCE_PATH_STYLE` | Set to `true` for S3-compatible services that require path-style addressing. |
+
+## S3-compatible storage
+
+Set `BACKUP_TARGET=s3` to store backups in an S3-compatible bucket. The controller will
+upload each dump using the credentials and endpoint supplied via the `S3_*` variables
+listed above. Backups remain fully compatible with all other commands (listing and
+restoring downloads the dump to a temporary location inside the container). When `--shared`
+is specified for a dump, the archive is still copied to the shared directory in addition
+to the S3 upload.
+
+### Integration tests
+
+The integration test suite uses Docker to spin up PostgreSQL and controller containers.
+Tests that exercise S3 storage require credentials supplied through the `TEST_S3_*`
+environment variables. You can create a local `.env` file (ignored by Git) by copying
+`.env.example` and filling in the required values. The test harness automatically loads
+the file when present.
 
 ## Controller CLI
 

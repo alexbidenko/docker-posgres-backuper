@@ -2,17 +2,23 @@ package utils
 
 import (
 	"log"
-	"os"
+	"sort"
+
+	"docker-postgres-backuper/storage"
 )
 
-func List(database, backupPath string) {
-	files, err := os.ReadDir(backupPath + "/" + database)
+func List(provider storage.Provider, database string) {
+	files, err := provider.List(database)
 	if err != nil {
-		log.Println("read directory error:", err)
+		log.Println("list backups error:", err)
 		return
 	}
 
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name < files[j].Name
+	})
+
 	for _, file := range files {
-		log.Println(file.Name())
+		log.Println(file.Name)
 	}
 }
