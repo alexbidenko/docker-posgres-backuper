@@ -41,7 +41,7 @@ paths above. Otherwise backups are stored inside the working directory (`./backu
 4. Mount the database volume and a dedicated backup volume into the controller.
 5. (Optional) Provide custom credentials via environment variables (see below).
 
-A complete example is available in [`docker-compose.example.yml`](docker-compose.example.yml).
+A complete example is available in [`compose.example.yaml`](compose.example.yaml).
 
 ## Environment Variables
 
@@ -116,9 +116,10 @@ PostgreSQL refuses to start because of corrupted or inconsistent WAL segments.
 
 ## Permissions
 
-The container entrypoint (`docker-entrypoint.sh`) fixes ownership of the mounted
-backup and database directories to `postgres:postgres` before executing the main
-process. Ensure your volumes are writable by that user.
+The image runs the controller as the `postgres` user, matching the default user in
+the upstream PostgreSQL image. Mounted volumes must already be writable by that
+user—use `user: postgres` in your Compose configuration (or adjust ownership on the
+host) so that both the backup controller and the databases share the same UID/GID.
 
 ## License
 

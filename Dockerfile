@@ -27,10 +27,6 @@ RUN chown -R postgres:postgres /app && \
     chown -R postgres:postgres /var/lib/postgresql/backup && \
     chown -R postgres:postgres /var/lib/postgresql/databases
 
-COPY docker-entrypoint.sh /usr/local/bin
+ENTRYPOINT ["./controller"]
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-
-CMD ["./controller", "start"]
+CMD ["start"]
