@@ -178,3 +178,11 @@ style URLs are not supported. Without the path-style flag the controller asks th
 endpoint for `https://<bucket>.<host>/...`; providers that do not create wildcard
 bucket DNS records (Timeweb Cloud, some MinIO setups, etc.) will answer with `no
 such host` and the upload is skipped.
+
+### Troubleshooting S3 uploads
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `SignatureDoesNotMatch` even with the correct credentials | Clock drift inside the container | Compare `docker exec controller date` with your host time. If they differ by more than a few minutes, restart the container once the host clock is synced (Timeweb Cloud rejects requests whose signatures are in the future/past). |
+| `SignatureDoesNotMatch` for Timeweb Cloud | Missing path-style flag | Set `S3_FORCE_PATH_STYLE=true` so the request is sent to `https://s3.twcstorage.ru/<bucket>/...`. |
+| `SignatureDoesNotMatch` on other S3-compatible services | Incorrect region | Some providers expect `S3_REGION=us-east-1` regardless of the bucket location. Try matching the value used by their AWS CLI examples. |
