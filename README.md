@@ -174,4 +174,7 @@ With the example above, dumps for a database named `users` are stored at
 
 For S3-compatible providers supply `S3_ENDPOINT` (for example
 `https://minio.internal:9000`) and flip `S3_FORCE_PATH_STYLE=true` when virtual host
-style URLs are not supported.
+style URLs are not supported. Without the path-style flag the controller asks the
+endpoint for `https://<bucket>.<host>/...`; providers that do not create wildcard
+bucket DNS records (Timeweb Cloud, some MinIO setups, etc.) will answer with `no
+such host` and the upload is skipped.
