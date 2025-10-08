@@ -3,8 +3,9 @@ package utils
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
+
+	"docker-postgres-backuper/internal/storage"
 )
 
 func getDatabaseEnv(database, env string) string {
@@ -18,26 +19,10 @@ func getDatabaseEnv(database, env string) string {
 	return "postgres"
 }
 
-func Initialize(databaseList []string, backupPath, sharedPath string) {
-	for _, database := range databaseList {
-		createFolderCommand := exec.Command(
-			"mkdir",
-			backupPath+"/"+database,
-			"-p",
-		)
-		if message, err := createFolderCommand.CombinedOutput(); err != nil {
-			fmt.Println("create directory error:", err, string(message))
-		}
-
-		if os.Getenv("SERVER") == "production" {
-			createFolderCommand = exec.Command(
-				"mkdir",
-				sharedPath+"/"+database,
-				"-p",
-			)
-			if message, err := createFolderCommand.CombinedOutput(); err != nil {
-				fmt.Println("create shared directory error:", err, string(message))
-			}
+func Initialize(databaseList []string, storages []storage.Storage) {
+	for _, destination := range storages {
+		if err := destination.Prepare(databaseList); err != nil {
+			fmt.Println("prepare destination error:", destination.Name(), err)
 		}
 	}
 }

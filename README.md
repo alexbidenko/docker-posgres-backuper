@@ -16,6 +16,8 @@ restore tasks.
 - **Shared backup replication.** Optional copying of backups into a shared directory
   that can be mounted by other environments (for example to synchronise staging and
   production).
+- **Pluggable storage destinations.** Store archives on the local volume, push them
+  to S3-compatible object storage or use both destinations at once.
 - **Operational tooling.** Includes commands to list available backups, restore dumps
   and run `pg_resetwal` against a problematic database instance.
 
@@ -48,14 +50,26 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 | Variable | Description |
 | --- | --- |
 | `DATABASE_LIST` | Comma-separated list of database service identifiers that the controller manages. |
+| `MODE` | Set to `production` to use the predefined `/var/lib/postgresql/backup/*` locations and enable scheduled dumps. |
+| `SERVER` | When set to `production`, shared directories are created during initialisation. |
+| `COPING_TO_SHARED` | When `true`, automated dumps triggered in production are also copied to the shared directory. |
+| `BACKUP_TARGET` | Comma-separated list of destinations (`local`, `s3`). Defaults to `local`. |
+| `TZ` | Optional timezone used by cron-like scheduling inside the container. |
 | `<SERVICE>_POSTGRES_USER` | Username for the target database (defaults to `postgres`). |
 | `<SERVICE>_POSTGRES_PASSWORD` | Password for the target database (defaults to `postgres`). |
 | `<SERVICE>_POSTGRES_DB` | Database name used for restores (defaults to `postgres`). |
 | `<SERVICE>_POSTGRES_HOST` | Hostname of the database service (defaults to the service name). |
-| `MODE` | Set to `production` to use the predefined `/var/lib/postgresql/backup/*` locations and enable scheduled dumps. |
-| `SERVER` | When set to `production`, shared directories are created during initialisation. |
-| `COPING_TO_SHARED` | When `true`, automated dumps triggered in production are also copied to the shared directory. |
-| `TZ` | Optional timezone used by cron-like scheduling inside the container. |
+| `S3_BUCKET` | Name of the bucket that receives dumps when `BACKUP_TARGET` includes `s3`. |
+| `S3_PREFIX` | Optional directory/prefix inside the bucket. Useful for isolating backups per project. |
+| `S3_REGION` | AWS region for the bucket (for example `eu-central-1`). |
+| `S3_ENDPOINT` | Optional custom endpoint for S3-compatible storage. Leave empty for AWS. |
+| `S3_ACCESS_KEY_ID` | Access key for S3 authentication. |
+| `S3_SECRET_ACCESS_KEY` | Secret key for S3 authentication. |
+| `S3_SESSION_TOKEN` | Optional session token when using temporary credentials. |
+| `S3_USE_TLS` | `true`/`false` toggle controlling TLS usage for custom endpoints (default `true`). |
+| `S3_FORCE_PATH_STYLE` | `true` to force path-style requests (handy for MinIO and similar services). |
+| `S3_STORAGE_CLASS` | Optional storage class for uploaded objects (for example `STANDARD_IA`). |
+| `S3_MAX_RETRIES` | Number of retry attempts for failed S3 operations (default `0`, meaning a single attempt). |
 
 > **Note**: Environment variable prefixes are derived from the service identifier in
 > `DATABASE_LIST`. For example, a service named `users` uses `USERS_POSTGRES_USER`,
@@ -139,3 +153,25 @@ go test ./test/... -v
 
 > **Note**: Docker must be available in the environment. When it is missing the
 > integration suite is skipped.
+A local destination is required for the `list`, `restore` and `restore-from-shared`
+commands. When `BACKUP_TARGET` excludes `filesystem`, those commands will report
+that local storage is disabled.
+
+## S3 configuration
+
+When `BACKUP_TARGET` contains `s3`, the controller uploads every dump to the
+configured bucket in addition to any local copies. Use `S3_PREFIX` to keep
+archives for different projects separated:
+
+```
+BACKUP_TARGET="filesystem,s3"
+S3_BUCKET=my-company-backups
+S3_PREFIX=sites/prod-blog
+```
+
+With the example above, dumps for a database named `users` are stored at
+`s3://my-company-backups/sites/prod-blog/users/...`.
+
+For S3-compatible providers supply `S3_ENDPOINT` (for example
+`https://minio.internal:9000`) and flip `S3_FORCE_PATH_STYLE=true` when virtual host
+style URLs are not supported.

@@ -5,77 +5,83 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
+	"path/filepath"
 	"time"
+
+	"docker-postgres-backuper/internal/storage"
 )
 
-func Cleanup(database, backupPath string) {
-	files, err := os.ReadDir(backupPath + "/" + database)
-	if err != nil {
-		log.Println("read directory error:", err)
+func Dump(database, backupType string, storages []storage.Storage, shared storage.Storage, copyToShared bool, databaseList []string) {
+	if len(storages) == 0 {
+		log.Println("no storage destinations configured, skipping dump")
 		return
 	}
 
-	dailyRetention := time.Now().Add(-time.Hour * 24 * 7)
-	weeklyRetention := time.Now().Add(-time.Hour * 24 * 30)
-	monthlyRetention := time.Now().Add(-time.Hour * 24 * 365)
+	filename := fmt.Sprintf("file_%s_%s.dump", backupType, time.Now().Format(time.RFC3339))
+	targets := []string{database}
+	if database == "--all" {
+		targets = databaseList
+	}
 
-	for _, file := range files {
-		i, err := file.Info()
-		if err != nil {
-			log.Println("read file info error:", err)
-			break
+	for _, item := range targets {
+		if item == "" {
+			continue
 		}
 
-		backupType := strings.Split(file.Name(), "_")[1]
+		tempDir, err := os.MkdirTemp("", "pgdump-")
+		if err != nil {
+			log.Println("create temp directory error:", err)
+			continue
+		}
 
-		if (backupType == "daily" && i.ModTime().Before(dailyRetention)) ||
-			(backupType == "weekly" && i.ModTime().Before(weeklyRetention)) ||
-			(backupType == "monthly" && i.ModTime().Before(monthlyRetention)) {
+		dumpPath := filepath.Join(tempDir, filename)
+		if err := runDump(item, dumpPath); err != nil {
+			log.Println("create backup error:", err)
+			_ = os.RemoveAll(tempDir)
+			continue
+		}
 
-			if err = os.Remove(backupPath + "/" + database + "/" + file.Name()); err != nil {
-				log.Println("remove file error:", err)
+		for _, destination := range storages {
+			if err := destination.Store(item, filename, dumpPath); err != nil {
+				log.Printf("store backup in %s error: %v\n", destination.Name(), err)
 			}
+		}
+
+		if copyToShared && shared != nil {
+			if err := shared.Store(item, "file.dump", dumpPath); err != nil {
+				log.Printf("copying to shared storage error: %v\n", err)
+			}
+		}
+
+		now := time.Now()
+		for _, destination := range storages {
+			if err := destination.Cleanup(item, now); err != nil {
+				log.Printf("cleanup in %s error: %v\n", destination.Name(), err)
+			}
+		}
+
+		if err := os.RemoveAll(tempDir); err != nil {
+			log.Println("cleanup temp directory error:", err)
 		}
 	}
 }
 
-func Dump(database, backupPath, backupType string, withCopying bool, databaseList []string) {
-	filename := "file_" + backupType + "_" + time.Now().Format(time.RFC3339) + ".dump"
+func runDump(database, dumpPath string) error {
+	dumpCommand := exec.Command(
+		"pg_dump",
+		"-c",
+		"-Fc",
+		"-U", getDatabaseEnv(database, "POSTGRES_USER"),
+		"-h", getDatabaseEnv(database, "POSTGRES_HOST"),
+		"-d", getDatabaseEnv(database, "POSTGRES_DB"),
+		"-f", dumpPath,
+	)
+	dumpCommand.Env = append(os.Environ(), "PGPASSWORD="+getDatabaseEnv(database, "POSTGRES_PASSWORD"))
 
-	list := []string{database}
-	if database == "--all" {
-		list = databaseList
+	if message, err := dumpCommand.CombinedOutput(); err != nil {
+		return fmt.Errorf("%w: %s", err, string(message))
 	}
-
-	for _, item := range list {
-		dumpCommand := exec.Command(
-			"pg_dump",
-			"-c",
-			"-Fc",
-			"-U", getDatabaseEnv(item, "POSTGRES_USER"),
-			"-h", getDatabaseEnv(item, "POSTGRES_HOST"),
-			"-f", backupPath+"/"+item+"/"+filename,
-		)
-		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+getDatabaseEnv(item, "POSTGRES_PASSWORD"))
-		if message, err := dumpCommand.CombinedOutput(); err != nil {
-			fmt.Println("create backup error:", err, string(message))
-		}
-
-		if withCopying {
-			copyCommand := exec.Command(
-				"cp",
-				backupPath+"/"+item+"/"+filename,
-				BaseSharedDirectoryPath+"/"+item+"/file.dump",
-				"-f",
-			)
-			if message, err := copyCommand.CombinedOutput(); err != nil {
-				fmt.Println("copying to shared directory error:", err, string(message))
-			}
-		}
-
-		Cleanup(item, backupPath)
-	}
+	return nil
 }
 
 func GetBackupType() string {
@@ -85,9 +91,9 @@ func GetBackupType() string {
 
 	if day == 1 {
 		return "monthly"
-	} else if weekday == time.Saturday {
-		return "weekly"
-	} else {
-		return "daily"
 	}
+	if weekday == time.Saturday {
+		return "weekly"
+	}
+	return "daily"
 }
