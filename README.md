@@ -95,7 +95,7 @@ copied into the shared directory as `file.dump`.
 ./controller restore <database-name> <backup-file>
 ```
 Restores a dump located in the database backup directory. Use the filename listed by
-`./controller list` (for example `file_daily_2024-07-04T09:00:00Z.dump`).
+`./controller list` (for example `file_daily_2025-07-04T09:00:00Z.dump`).
 
 ```
 ./controller restore-from-shared <database-name|--all>
@@ -131,7 +131,7 @@ Integration tests cover the full backup and restore flow by orchestrating
 PostgreSQL and the controller inside Docker containers. To run them locally:
 
 ```bash
-go test ./... ./test/...
+go test ./test/... -v
 ```
 
 > **Tip**: run with `-v` to see a step-by-step log of every Docker command that the

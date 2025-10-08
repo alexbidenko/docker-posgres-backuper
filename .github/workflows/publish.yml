@@ -9,13 +9,13 @@ jobs:
 
     strategy:
       matrix:
-        postgres: ['14', '15', '16', '17']
+        postgres: ['14', '15', '16', '17', '18']
 
     runs-on: ubuntu-24.04
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get version
         run: |
@@ -26,7 +26,7 @@ jobs:
       - name: Prepare tags
         id: prepare-tags
         run: |
-          if [[ ${{ matrix.postgres }} == '17' ]]; then
+          if [[ ${{ matrix.postgres }} == '18' ]]; then
             echo "tags=${{ env.CURRENT_TAG }},${{ env.POSTGRES_TAG }},${{ env.LATEST_TAG }}" >> $GITHUB_OUTPUT
           else
             echo "tags=${{ env.CURRENT_TAG }},${{ env.POSTGRES_TAG }}" >> $GITHUB_OUTPUT
