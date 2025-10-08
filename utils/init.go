@@ -3,8 +3,10 @@ package utils
 import (
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"docker-postgres-backuper/storage"
 )
 
 func getDatabaseEnv(database, env string) string {
@@ -18,25 +20,15 @@ func getDatabaseEnv(database, env string) string {
 	return "postgres"
 }
 
-func Initialize(databaseList []string, backupPath, sharedPath string) {
+func Initialize(provider storage.Provider, databaseList []string, sharedPath string, createShared bool) {
 	for _, database := range databaseList {
-		createFolderCommand := exec.Command(
-			"mkdir",
-			backupPath+"/"+database,
-			"-p",
-		)
-		if message, err := createFolderCommand.CombinedOutput(); err != nil {
-			fmt.Println("create directory error:", err, string(message))
+		if err := provider.EnsureDatabase(database); err != nil {
+			fmt.Println("ensure storage for database error:", err)
 		}
 
-		if os.Getenv("SERVER") == "production" {
-			createFolderCommand = exec.Command(
-				"mkdir",
-				sharedPath+"/"+database,
-				"-p",
-			)
-			if message, err := createFolderCommand.CombinedOutput(); err != nil {
-				fmt.Println("create shared directory error:", err, string(message))
+		if createShared {
+			if err := os.MkdirAll(filepath.Join(sharedPath, database), 0o755); err != nil {
+				fmt.Println("create shared directory error:", err)
 			}
 		}
 	}
