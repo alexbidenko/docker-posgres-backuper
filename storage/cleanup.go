@@ -15,6 +15,7 @@ func Cleanup(p Provider, database string, now time.Time) error {
 	dailyRetention := now.Add(-7 * 24 * time.Hour)
 	weeklyRetention := now.Add(-30 * 24 * time.Hour)
 	monthlyRetention := now.Add(-365 * 24 * time.Hour)
+	manualRetention := now.Add(-365 * 24 * time.Hour)
 
 	for _, file := range files {
 		parts := strings.Split(file.Name, "_")
@@ -30,6 +31,8 @@ func Cleanup(p Provider, database string, now time.Time) error {
 			cutoff = weeklyRetention
 		case "monthly":
 			cutoff = monthlyRetention
+		case "manual":
+			cutoff = manualRetention
 		default:
 			continue
 		}
