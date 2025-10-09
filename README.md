@@ -12,7 +12,7 @@ restore tasks.
 - **Configurable credentials per service.** Override host, database, user and password
   for each database through environment variables.
 - **Retention policy.** Old archives are cleaned up automatically (daily backups are
-  kept for 7 days, weekly for 30 days and monthly for 365 days).
+  kept for 7 days, weekly for 30 days and monthly/manual for 365 days).
 - **Shared backup replication.** Optional copying of backups into a shared directory
   that can be mounted by other environments (for example to synchronise staging and
   production).
@@ -169,7 +169,7 @@ Integration tests cover the full backup and restore flow by orchestrating
 PostgreSQL and the controller inside Docker containers. To run them locally:
 
 ```bash
-go test ./test/... -v
+go clean -testcache ; go test ./test/... -v
 ```
 
 > **Tip**: run with `-v` to see a step-by-step log of every Docker command that the
