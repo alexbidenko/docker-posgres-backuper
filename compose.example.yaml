@@ -2,8 +2,6 @@ version: '3.8'
 
 volumes:
   database-backup:
-  shared-backup:
-
   users-database:
   content-database:
 
@@ -12,14 +10,12 @@ services:
     image: alexbidenko/docker-postgres-backuper:17postgres
     volumes:
       - database-backup:/var/lib/postgresql/backup/data
-      - shared-backup:/var/lib/postgresql/backup/shared
 
       - users-database:/var/lib/postgresql/databases/users
       - company-database:/var/lib/postgresql/databases/company
     environment:
       BACKUP_TARGET: local
       DATABASE_LIST: "users,content"
-      COPING_TO_SHARED: true
       TZ: Europe/London
       USERS_POSTGRES_HOST: users-database
       USERS_POSTGRES_USER: postgres

@@ -112,7 +112,6 @@ func TestControllerLocalStorage(t *testing.T) {
 		"TESTDB_POSTGRES_HOST":     "postgres-db",
 		"TESTDB_POSTGRES_DB":       "postgres",
 		"MODE":                     "production",
-		"SERVER":                   "production",
 	})
 
 	t.Log("running manual dump")
@@ -136,26 +135,6 @@ func TestControllerLocalStorage(t *testing.T) {
 		t.Fatalf("unexpected data after restore: %v", rows)
 	}
 
-	sharedRows := []string{"charlie", "delta"}
-	t.Log("preparing shared dump dataset")
-	runPSQL(t, env.repoRoot, env.postgresName, "TRUNCATE items;")
-	insertRows(t, env.repoRoot, env.postgresName, sharedRows)
-
-	t.Log("creating shared dump")
-	runController(t, env.repoRoot, controllerName, "./controller", "dump", "testdb", "--shared")
-
-	ensureSharedDumpExists(t, env.repoRoot, controllerName, "/var/lib/postgresql/backup/shared/testdb/file.dump")
-
-	t.Log("mutating table before restore-from-shared")
-	runPSQL(t, env.repoRoot, env.postgresName, "TRUNCATE items;")
-	insertRows(t, env.repoRoot, env.postgresName, []string{"mutated"})
-
-	t.Log("restoring from shared dump")
-	runController(t, env.repoRoot, controllerName, "./controller", "restore-from-shared", "testdb")
-
-	if rows := queryRows(t, env.repoRoot, env.postgresName); !equalSlices(rows, sharedRows) {
-		t.Fatalf("unexpected data after restore-from-shared: %v", rows)
-	}
 }
 
 func TestControllerS3Storage(t *testing.T) {
@@ -185,7 +164,6 @@ func TestControllerS3Storage(t *testing.T) {
 		"TESTDB_POSTGRES_HOST":     "postgres-db",
 		"TESTDB_POSTGRES_DB":       "postgres",
 		"MODE":                     "production",
-		"SERVER":                   "production",
 		"BACKUP_TARGET":            "s3",
 		"S3_BUCKET":                cfg.Bucket,
 		"S3_PREFIX":                prefix,
@@ -320,11 +298,6 @@ func latestBackup(t *testing.T, dir, container, path string) string {
 		t.Fatalf("no backups found in %s", path)
 	}
 	return lines[len(lines)-1]
-}
-
-func ensureSharedDumpExists(t *testing.T, dir, container, path string) {
-	t.Helper()
-	runDockerCommand(t, dir, "exec", "-u", "postgres", container, "test", "-f", path)
 }
 
 func equalSlices(a, b []string) bool {

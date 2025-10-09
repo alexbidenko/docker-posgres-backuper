@@ -21,7 +21,7 @@ func main() {
 	}
 
 	command := os.Args[1]
-	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump" || command == "resetwal" || command == "restore-from-shared"))) {
+	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump" || command == "resetwal"))) {
 		panic("uncorrected command")
 	}
 
@@ -29,11 +29,6 @@ func main() {
 	if os.Getenv("MODE") == "production" {
 		backupPath = utils.BaseBackupDirectoryPath
 	}
-	sharedPath := "backup-data"
-	if os.Getenv("MODE") == "production" {
-		sharedPath = utils.BaseSharedDirectoryPath
-	}
-
 	provider, err := storage.NewProvider(os.Getenv("BACKUP_TARGET"), storage.Config{
 		Local: storage.LocalConfig{BasePath: backupPath},
 		S3: storage.S3Config{
@@ -66,23 +61,18 @@ func main() {
 		return
 	}
 
-	if command == "restore-from-shared" {
-		utils.RestoreFromShared(os.Args[2], sharedPath, "file.dump", databaseList)
-		return
-	}
-
 	if command == "dump" {
-		utils.Dump(provider, os.Args[2], "manual", len(os.Args) > 3 && os.Args[3] == "--shared", databaseList, sharedPath)
+		utils.Dump(provider, os.Args[2], "manual", databaseList)
 		return
 	}
 
-	utils.Initialize(provider, databaseList, sharedPath, os.Getenv("SERVER") == "production")
+	utils.Initialize(provider, databaseList)
 
 	fmt.Println("Program started...")
 
 	for range time.Tick(time.Hour) {
 		if time.Now().Hour()%utils.IntervalInHours == 3 && os.Getenv("MODE") == "production" {
-			utils.Dump(provider, "--all", utils.GetBackupType(), os.Getenv("COPING_TO_SHARED") == "true", databaseList, sharedPath)
+			utils.Dump(provider, "--all", utils.GetBackupType(), databaseList)
 		}
 	}
 }
