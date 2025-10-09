@@ -2,17 +2,15 @@ package utils
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"docker-postgres-backuper/storage"
 )
 
-func Dump(provider storage.Provider, database, backupType string, withCopying bool, databaseList []string, sharedPath string) {
+func Dump(provider storage.Provider, database, backupType string, databaseList []string) {
 	filename := "file_" + backupType + "_" + time.Now().Format(time.RFC3339) + ".dump"
 
 	list := []string{database}
@@ -45,12 +43,6 @@ func Dump(provider storage.Provider, database, backupType string, withCopying bo
 			continue
 		}
 
-		if withCopying {
-			if err := copyToShared(tempFilePath, filepath.Join(sharedPath, item, "file.dump")); err != nil {
-				fmt.Println("copying to shared directory error:", err)
-			}
-		}
-
 		if err := provider.Save(item, filename, tempFilePath); err != nil {
 			fmt.Println("save backup error:", err)
 		} else {
@@ -75,30 +67,4 @@ func GetBackupType() string {
 	} else {
 		return "daily"
 	}
-}
-
-func copyToShared(src, dst string) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return err
-	}
-
-	input, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer input.Close()
-
-	output, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = output.Close()
-	}()
-
-	if _, err := io.Copy(output, input); err != nil {
-		return err
-	}
-
-	return output.Sync()
 }

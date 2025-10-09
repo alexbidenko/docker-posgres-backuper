@@ -13,9 +13,6 @@ restore tasks.
   for each database through environment variables.
 - **Retention policy.** Old archives are cleaned up automatically (daily backups are
   kept for 7 days, weekly for 30 days and monthly/manual for 365 days).
-- **Shared backup replication.** Optional copying of backups into a shared directory
-  that can be mounted by other environments (for example to synchronise staging and
-  production).
 - **Operational tooling.** Includes commands to list available backups, restore dumps
   and run `pg_resetwal` against a problematic database instance.
 
@@ -26,7 +23,6 @@ The container expects the following mount points:
 | Mount | Purpose |
 | --- | --- |
 | `/var/lib/postgresql/backup/data/<database>` | Primary backup storage for each database. |
-| `/var/lib/postgresql/backup/shared/<database>` | Optional shared storage used when `--shared` flag is provided. |
 | `/var/lib/postgresql/databases/<database>` | PostgreSQL data directories (needed for WAL reset operations). |
 
 When `MODE=production`, the controller writes directly to the `/var/lib/postgresql/backup/*`
@@ -52,8 +48,6 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 | `BACKUP_TARGET` | Storage provider used for backups. Set to `local` (default) or `s3`. |
 | `DATABASE_LIST` | Comma-separated list of database service identifiers that the controller manages. |
 | `MODE` | Set to `production` to use the predefined `/var/lib/postgresql/backup/*` locations and enable scheduled dumps. |
-| `SERVER` | When set to `production`, shared directories are created during initialisation. |
-| `COPING_TO_SHARED` | When `true`, automated dumps triggered in production are also copied to the shared directory. |
 | `TZ` | Optional timezone used by cron-like scheduling inside the container. |
 
 ### Database connection overrides
@@ -87,9 +81,7 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 Set `BACKUP_TARGET=s3` to store backups in an S3-compatible bucket. The controller will
 upload each dump using the credentials and endpoint supplied via the `S3_*` variables
 listed above. Backups remain fully compatible with all other commands (listing and
-restoring downloads the dump to a temporary location inside the container). When `--shared`
-is specified for a dump, the archive is still copied to the shared directory in addition
-to the S3 upload.
+restoring downloads the dump to a temporary location inside the container).
 
 ### Integration tests
 
@@ -123,11 +115,10 @@ Retention is enforced after each run according to the policy described above.
 ### Manual operations
 
 ```
-./controller dump <database-name|--all> [--shared]
+./controller dump <database-name|--all>
 ```
 Creates a dump for a single database, or for every database listed in `DATABASE_LIST`
-when `--all` is provided. If `--shared` is passed, the resulting archives are also
-copied into the shared directory as `file.dump`.
+when `--all` is provided.
 
 ```
 ./controller restore <database-name> <backup-file>
@@ -135,13 +126,6 @@ copied into the shared directory as `file.dump`.
 Restores a dump located in the database backup directory. Use the filename listed by
 `./controller list` (for example `file_daily_2025-07-04T09:00:00Z.dump`).
 
-```
-./controller restore-from-shared <database-name|--all>
-```
-Restores from the `file.dump` archive located in the shared directory. Useful for
-synchronising environments from production exports.
-
-```
 ./controller list <database-name>
 ```
 Lists available backup files for the given database.
