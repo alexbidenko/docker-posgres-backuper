@@ -126,6 +126,7 @@ when `--all` is provided.
 Restores a dump located in the database backup directory. Use the filename listed by
 `./controller list` (for example `file_daily_2025-07-04T09:00:00Z.dump`).
 
+```
 ./controller list <database-name>
 ```
 Lists available backup files for the given database.
