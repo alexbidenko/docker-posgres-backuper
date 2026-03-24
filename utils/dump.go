@@ -19,6 +19,12 @@ func Dump(provider storage.Provider, database, backupType string, databaseList [
 	}
 
 	for _, item := range list {
+		password, err := getDatabasePassword(item)
+		if err != nil {
+			fmt.Println("resolve database password error:", err)
+			continue
+		}
+
 		tempFile, err := os.CreateTemp("", "pgdump-*.dump")
 		if err != nil {
 			fmt.Println("create temporary file error:", err)
@@ -35,7 +41,7 @@ func Dump(provider storage.Provider, database, backupType string, databaseList [
 			"-h", getDatabaseEnv(item, "POSTGRES_HOST"),
 			"-f", tempFilePath,
 		)
-		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+getDatabaseEnv(item, "POSTGRES_PASSWORD"))
+		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+password)
 		dumpCommand.Env = append(dumpCommand.Env, "PGDATABASE="+getDatabaseEnv(item, "POSTGRES_DB"))
 		if message, err := dumpCommand.CombinedOutput(); err != nil {
 			fmt.Println("create backup error:", err, string(message))

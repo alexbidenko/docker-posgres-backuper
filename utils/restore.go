@@ -14,6 +14,12 @@ func Restore(provider storage.Provider, database, filename string, databaseList 
 	}
 
 	for _, item := range list {
+		password, err := getDatabasePassword(item)
+		if err != nil {
+			fmt.Println("resolve database password error:", err)
+			continue
+		}
+
 		localPath, cleanup, err := provider.Fetch(item, filename)
 		if err != nil {
 			fmt.Println("fetch backup error:", err)
@@ -28,7 +34,7 @@ func Restore(provider storage.Provider, database, filename string, databaseList 
 			"-d", getDatabaseEnv(item, "POSTGRES_DB"),
 			localPath,
 		)
-		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+getDatabaseEnv(item, "POSTGRES_PASSWORD"))
+		dumpCommand.Env = append(dumpCommand.Env, "PGPASSWORD="+password)
 		if message, err := dumpCommand.CombinedOutput(); err != nil {
 			fmt.Println("restore backup error:", err, string(message))
 		}

@@ -67,6 +67,7 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 | `<SERVICE>_POSTGRES_HOST` | Hostname of the database service (defaults to the service name). |
 | `<SERVICE>_POSTGRES_USER` | Username for the target database (defaults to `postgres`). |
 | `<SERVICE>_POSTGRES_PASSWORD` | Password for the target database (defaults to `postgres`). |
+| `<SERVICE>_POSTGRES_PASSWORD_FILE` | Path to a file containing the target database password. If both password variables are set, the file value wins. |
 | `<SERVICE>_POSTGRES_DB` | Database name used for restores (defaults to `postgres`). |
 
 > **Note**: Environment variable prefixes are derived from the service identifier in
