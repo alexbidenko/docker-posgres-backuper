@@ -13,8 +13,8 @@ restore tasks.
   for each database through environment variables.
 - **Retention policy.** Old archives are cleaned up automatically (daily backups are
   kept for 7 days, weekly for 30 days and monthly/manual for 365 days).
-- **Operational tooling.** Includes commands to list available backups, restore dumps
-  and run `pg_resetwal` against a problematic database instance.
+- **Operational tooling.** Includes commands to list available backups, create dumps
+  and restore them on demand.
 
 ## Container Layout
 
@@ -23,10 +23,20 @@ The container expects the following mount points:
 | Mount | Purpose |
 | --- | --- |
 | `/var/lib/postgresql/backup/data/<database>` | Primary backup storage for each database. |
-| `/var/lib/postgresql/databases/<database>` | PostgreSQL data directories (needed for WAL reset operations). |
 
 When `MODE=production`, the controller writes directly to the `/var/lib/postgresql/backup/*`
 paths above. Otherwise backups are stored inside the working directory (`./backup-data`).
+
+## PostgreSQL 18 Support
+
+The controller's backup and restore flow remains the same on PostgreSQL 18 because it uses
+logical dumps via `pg_dump` and `pg_restore`, not PostgreSQL's on-disk cluster format.
+
+- Existing backup files do not need migration for PostgreSQL 18.
+- Upgrading a live PostgreSQL cluster still requires the usual PostgreSQL major-upgrade path:
+  logical dump/restore, `pg_upgrade`, or logical replication.
+- If you run the official `postgres:18` Docker image, mount the database service volume at
+  `/var/lib/postgresql` rather than `/var/lib/postgresql/data`.
 
 ## Adding a New Database Service
 
@@ -34,7 +44,7 @@ paths above. Otherwise backups are stored inside the working directory (`./backu
 2. Create a new database service that uses that volume.
 3. Append the service name to the `DATABASE_LIST` environment variable of the
    controller (comma-separated).
-4. Mount the database volume and a dedicated backup volume into the controller.
+4. Mount a dedicated backup volume into the controller.
 5. (Optional) Provide custom credentials via environment variables (see below).
 
 A complete example is available in [`compose.example.yaml`](compose.example.yaml).
@@ -131,18 +141,12 @@ Restores a dump located in the database backup directory. Use the filename liste
 ```
 Lists available backup files for the given database.
 
-```
-./controller resetwal <database-name>
-```
-Executes `pg_resetwal` against the specified database directory. This is helpful when
-PostgreSQL refuses to start because of corrupted or inconsistent WAL segments.
-
 ## Permissions
 
 The image runs the controller as the `postgres` user, matching the default user in
-the upstream PostgreSQL image. Mounted volumes must already be writable by that
+the upstream PostgreSQL image. Mounted backup volumes must already be writable by that
 user—use `user: postgres` in your Compose configuration (or adjust ownership on the
-host) so that both the backup controller and the databases share the same UID/GID.
+host) so the controller can create and restore dump files.
 
 ## License
 

@@ -21,7 +21,7 @@ func main() {
 	}
 
 	command := os.Args[1]
-	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump" || command == "resetwal"))) {
+	if !(command == "start" || (len(os.Args) > 2 && ((command == "restore" && len(os.Args) > 3) || command == "list" || command == "dump"))) {
 		panic("uncorrected command")
 	}
 
@@ -48,11 +48,6 @@ func main() {
 
 	if command == "list" {
 		utils.List(provider, os.Args[2])
-		return
-	}
-
-	if command == "resetwal" {
-		utils.Resetwal(os.Args[2], utils.BaseDatabaseDirectoryPath)
 		return
 	}
 

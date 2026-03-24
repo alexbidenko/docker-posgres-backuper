@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -25,6 +26,7 @@ type controllerTestEnv struct {
 	networkName  string
 	postgresName string
 	imageName    string
+	postgresTag  string
 }
 
 func newControllerTestEnv(t *testing.T) *controllerTestEnv {
@@ -32,6 +34,7 @@ func newControllerTestEnv(t *testing.T) *controllerTestEnv {
 
 	repoRoot := projectRoot(t)
 	env := &controllerTestEnv{t: t, repoRoot: repoRoot}
+	env.postgresTag = testPostgresVersion()
 
 	env.networkName = fmt.Sprintf("pgbackup-test-%d", time.Now().UnixNano())
 	t.Logf("creating temporary Docker network %s", env.networkName)
@@ -49,7 +52,7 @@ func newControllerTestEnv(t *testing.T) *controllerTestEnv {
 		"--network-alias", "postgres-db",
 		"-e", "POSTGRES_PASSWORD=postgres",
 		"-e", "POSTGRES_DB=postgres",
-		"postgres:15-alpine",
+		fmt.Sprintf("postgres:%s-alpine", env.postgresTag),
 	)
 	t.Cleanup(func() {
 		runDockerCommandAllowFailure(t, repoRoot, "rm", "-f", env.postgresName)
@@ -62,7 +65,7 @@ func newControllerTestEnv(t *testing.T) *controllerTestEnv {
 	t.Logf("building controller image %s", env.imageName)
 	runDockerCommand(t, repoRoot,
 		"build", "-t", env.imageName,
-		"--build-arg", "POSTGRES_VERSION=15",
+		"--build-arg", fmt.Sprintf("POSTGRES_VERSION=%s", env.postgresTag),
 		repoRoot,
 	)
 	t.Cleanup(func() {
@@ -205,6 +208,13 @@ func requireDocker(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Skipf("docker is required for integration tests: %v", err)
 	}
+}
+
+func testPostgresVersion() string {
+	if value := strings.TrimSpace(os.Getenv("TEST_POSTGRES_VERSION")); value != "" {
+		return value
+	}
+	return "15"
 }
 
 func projectRoot(t *testing.T) string {

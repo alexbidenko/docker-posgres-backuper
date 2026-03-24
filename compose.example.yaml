@@ -7,12 +7,9 @@ volumes:
 
 services:
   controller:
-    image: alexbidenko/docker-postgres-backuper:17postgres
+    image: alexbidenko/docker-postgres-backuper:18postgres
     volumes:
       - database-backup:/var/lib/postgresql/backup/data
-
-      - users-database:/var/lib/postgresql/databases/users
-      - company-database:/var/lib/postgresql/databases/company
     environment:
       BACKUP_TARGET: local
       DATABASE_LIST: "users,content"
@@ -41,12 +38,12 @@ services:
         condition: on-failure
 
   users-database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - users-database:/var/lib/postgresql/data
+      - users-database:/var/lib/postgresql
     user: postgres
     deploy:
       replicas: 1
@@ -54,12 +51,12 @@ services:
         condition: on-failure
 
   content-database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - content-database:/var/lib/postgresql/data
+      - content-database:/var/lib/postgresql
     user: postgres
     deploy:
       replicas: 1

@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        postgres: ['15', '18']
 
     steps:
       - uses: actions/checkout@v5
@@ -18,6 +21,7 @@ jobs:
 
       - name: Run tests
         env:
+          TEST_POSTGRES_VERSION: ${{ matrix.postgres }}
           TEST_S3_ENDPOINT: ${{ secrets.TEST_S3_ENDPOINT }}
           TEST_S3_BUCKET: ${{ secrets.TEST_S3_BUCKET }}
           TEST_S3_REGION: ${{ secrets.TEST_S3_REGION }}
