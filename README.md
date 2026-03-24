@@ -83,7 +83,9 @@ A complete example is available in [`compose.example.yaml`](compose.example.yaml
 | `S3_REGION` | AWS region of the S3 endpoint. |
 | `S3_ENDPOINT` | Endpoint URL of the S3-compatible service. |
 | `S3_ACCESS_KEY_ID` | Access key for the S3 service. |
+| `S3_ACCESS_KEY_ID_FILE` | Path to a file containing the S3 access key ID. If both access key variables are set, the file value wins. |
 | `S3_SECRET_ACCESS_KEY` | Secret key for the S3 service. |
+| `S3_SECRET_ACCESS_KEY_FILE` | Path to a file containing the S3 secret access key. If both secret key variables are set, the file value wins. |
 | `S3_USE_TLS` | Set to `true` to use HTTPS (recommended). |
 | `S3_FORCE_PATH_STYLE` | Set to `true` for S3-compatible services that require path-style addressing. |
 

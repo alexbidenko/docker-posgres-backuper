@@ -15,6 +15,15 @@ func main() {
 		panic("uncorrected command")
 	}
 
+	s3AccessKeyID, err := getEnvOrFile("S3_ACCESS_KEY_ID")
+	if err != nil {
+		panic(err)
+	}
+	s3SecretAccessKey, err := getEnvOrFile("S3_SECRET_ACCESS_KEY")
+	if err != nil {
+		panic(err)
+	}
+
 	var databaseList []string
 	if os.Getenv("DATABASE_LIST") != "" {
 		databaseList = strings.Split(os.Getenv("DATABASE_LIST"), ",")
@@ -36,8 +45,8 @@ func main() {
 			Prefix:          os.Getenv("S3_PREFIX"),
 			Region:          os.Getenv("S3_REGION"),
 			Endpoint:        os.Getenv("S3_ENDPOINT"),
-			AccessKeyID:     os.Getenv("S3_ACCESS_KEY_ID"),
-			SecretAccessKey: os.Getenv("S3_SECRET_ACCESS_KEY"),
+			AccessKeyID:     s3AccessKeyID,
+			SecretAccessKey: s3SecretAccessKey,
 			UseTLS:          boolEnv("S3_USE_TLS", true),
 			ForcePathStyle:  boolEnv("S3_FORCE_PATH_STYLE", false),
 		},
@@ -82,4 +91,17 @@ func boolEnv(key string, defaultValue bool) bool {
 		return defaultValue
 	}
 	return parsed
+}
+
+func getEnvOrFile(key string) (string, error) {
+	filePath := os.Getenv(key + "_FILE")
+	if filePath != "" {
+		value, err := os.ReadFile(filePath)
+		if err != nil {
+			return "", fmt.Errorf("read %s: %w", key+"_FILE", err)
+		}
+		return strings.TrimRight(string(value), "\r\n"), nil
+	}
+
+	return os.Getenv(key), nil
 }
