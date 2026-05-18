@@ -70,7 +70,7 @@ func New(cfg Config) (*Client, error) {
 	endpoint.Path = strings.TrimRight(endpoint.Path, "/")
 	timeout := cfg.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 30 * time.Minute
 	}
 	return &Client{
 		httpClient:      &http.Client{Timeout: timeout},

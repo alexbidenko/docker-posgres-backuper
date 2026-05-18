@@ -51,7 +51,7 @@ func (p *s3Provider) Save(database, filename, localPath string) error {
 		return fmt.Errorf("open local file: %w", err)
 	}
 	defer file.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 	if err := p.client.PutObject(ctx, p.bucket, p.objectKey(database, filename), file); err != nil {
 		return fmt.Errorf("upload object: %w", err)
